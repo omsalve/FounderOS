@@ -2,8 +2,34 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 
 export default function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const router = useRouter();
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
+    if (result?.error) {
+      setError("Invalid credentials");
+      return;
+    }
+
+    router.push("/dashboard");
+  }
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-black text-white">
       {/* Background */}
@@ -25,21 +51,18 @@ export default function LoginPage() {
       {/* Login section */}
       <section className="relative z-10 flex min-h-[calc(100vh-80px)] items-center justify-center px-4">
         <div className="relative">
-          {/* Blue ambient glow */}
           <motion.div
             animate={{ opacity: [0.6, 0.9, 0.6] }}
             transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
             className="absolute -inset-14 rounded-full bg-blue-600/15 blur-[140px]"
           />
 
-          {/* Card */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: "easeOut" }}
             className="relative z-10 w-full max-w-md rounded-xl border border-white/10 bg-gradient-to-b from-white/5 to-white/0 p-8 backdrop-blur-xl"
           >
-            {/* Title */}
             <h1 className="font-heading text-center text-4xl tracking-wide">
               LOGIN
             </h1>
@@ -47,9 +70,7 @@ export default function LoginPage() {
               ACCESS COMMAND CENTER
             </p>
 
-            {/* Form */}
-            <form className="mt-10 space-y-6">
-              {/* Email */}
+            <form onSubmit={handleSubmit} className="mt-10 space-y-6">
               <div>
                 <label className="mb-2 block text-xs tracking-wide text-white/50">
                   EMAIL COORDINATES
@@ -57,13 +78,15 @@ export default function LoginPage() {
                 <div className="rounded-md border border-white/10 bg-black/40 px-3 py-2">
                   <input
                     type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     placeholder="founder@venture.com"
                     className="w-full bg-transparent text-sm text-white placeholder:text-white/30 outline-none"
+                    required
                   />
                 </div>
               </div>
 
-              {/* Password */}
               <div>
                 <label className="mb-2 block text-xs tracking-wide text-white/50">
                   SECURITY KEY
@@ -71,25 +94,23 @@ export default function LoginPage() {
                 <div className="rounded-md border border-white/10 bg-black/40 px-3 py-2">
                   <input
                     type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••••"
                     className="w-full bg-transparent text-sm text-white placeholder:text-white/30 outline-none"
+                    required
                   />
                 </div>
               </div>
 
-              {/* Options */}
-              <div className="flex items-center justify-between text-xs text-white/40">
-                <label className="flex items-center gap-2">
-                  <input type="checkbox" className="accent-blue-600" />
-                  Remember device
-                </label>
-                <Link href="#" className="text-blue-400 hover:text-blue-300">
-                  Recover Access?
-                </Link>
-              </div>
+              {error && (
+                <p className="text-center text-xs text-red-400">
+                  {error}
+                </p>
+              )}
 
-              {/* CTA */}
               <motion.button
+                type="submit"
                 whileHover={{ y: -4 }}
                 whileTap={{ y: -1, scale: 0.98 }}
                 transition={{
@@ -102,10 +123,9 @@ export default function LoginPage() {
               </motion.button>
             </form>
 
-            {/* Footer */}
             <div className="mt-8 text-center text-xs text-white/40">
               Not initialized?{" "}
-              <Link href="#" className="text-white hover:underline">
+              <Link href="/register" className="text-white hover:underline">
                 Apply for access →
               </Link>
             </div>
@@ -113,7 +133,6 @@ export default function LoginPage() {
         </div>
       </section>
 
-      {/* Bottom meta */}
       <footer className="absolute bottom-6 left-1/2 -translate-x-1/2 text-[10px] tracking-widest text-white/30">
         SECURE CONNECTION · 256-BIT ENCRYPTION · v2.4.0
       </footer>
