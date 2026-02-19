@@ -14,12 +14,15 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  return (
-    <div className="flex min-h-screen bg-[#0B0F19] text-white">
-      <Sidebar />
-      <main className="flex-1 overflow-y-auto p-8">
-        {children}
-      </main>
-    </div>
-  );
+return (
+  <div className="flex h-screen overflow-hidden bg-[#0B0F19] text-white">
+    <Sidebar />
+
+    <main className="flex-1 overflow-hidden">
+      <div className="h-full w-full p-8">{children}</div>
+    </main>
+  </div>
+);
+
+
 }
