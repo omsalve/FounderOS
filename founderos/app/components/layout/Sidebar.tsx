@@ -28,9 +28,9 @@ const navItems = [
     label: "Focus",
   },
   {
-    href: "/dashboard/notes",
+    href: "/dashboard/ai",
     icon: MessageSquare,
-    label: "Notes",
+    label: "AI",
   },
 ];
 
