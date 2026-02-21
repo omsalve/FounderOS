@@ -1,42 +1,60 @@
 "use client";
 
+import { motion } from "framer-motion";
+import type { Variants } from "framer-motion";
+
+const container: Variants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.06 } },
+};
+
+const item: Variants = {
+  hidden: { opacity: 0, y: 8 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } },
+};
+
 export default function TasksRightPanel() {
   return (
-    <div className="space-y-4">
+    <motion.div
+      variants={container}
+      initial="hidden"
+      animate="show"
+      className="space-y-4"
+    >
       {/* Filters */}
-      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-        <p className="mb-3 text-xs tracking-wide text-white/40">
+      <motion.div variants={item} className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
+        <p className="mb-3 text-xs tracking-widest text-white/40">
           FILTERS
         </p>
 
-        <div className="flex rounded-lg bg-white/5 p-1 text-xs">
-          <button className="flex-1 rounded-md bg-white/10 py-1 text-white">
+        <div className="flex rounded-lg bg-white/[0.04] p-1 text-xs">
+          <button className="flex-1 rounded-md bg-white/[0.08] py-1.5 text-white transition-colors">
             All
           </button>
-          <button className="flex-1 py-1 text-white/50 hover:text-white">
+          <button className="flex-1 rounded-md py-1.5 text-white/40 transition-colors hover:text-white/70">
             Active
           </button>
-          <button className="flex-1 py-1 text-white/50 hover:text-white">
+          <button className="flex-1 rounded-md py-1.5 text-white/40 transition-colors hover:text-white/70">
             Completed
           </button>
         </div>
-      </div>
+      </motion.div>
 
       {/* Stats */}
-      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-        <p className="text-xs text-white/40">Tasks Completed</p>
-        <p className="mt-1 text-2xl font-semibold text-white">12</p>
-      </div>
+      <motion.div variants={item} className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
+        <p className="text-xs tracking-widest text-white/40">TASKS COMPLETED</p>
+        <p className="mt-1.5 text-2xl font-semibold text-white">12</p>
+      </motion.div>
 
-      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-        <p className="text-xs text-white/40">Completion Rate</p>
-        <p className="mt-1 text-2xl font-semibold text-white">88%</p>
-      </div>
+      <motion.div variants={item} className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
+        <p className="text-xs tracking-widest text-white/40">COMPLETION RATE</p>
+        <p className="mt-1.5 text-2xl font-semibold text-white">88%</p>
+      </motion.div>
 
-      <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-4">
-        <p className="text-xs text-blue-300">Current Streak</p>
-        <p className="mt-1 text-2xl font-semibold text-white">14 Days</p>
-      </div>
-    </div>
+      <motion.div variants={item} className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.08] p-4">
+        <p className="text-xs tracking-widest text-blue-300/70">CURRENT STREAK</p>
+        <p className="mt-1.5 text-2xl font-semibold text-white">14 Days</p>
+      </motion.div>
+    </motion.div>
   );
 }

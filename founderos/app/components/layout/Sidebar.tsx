@@ -38,15 +38,15 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-screen w-20 flex-shrink-0 flex-col items-center border-r border-white/10 bg-black/40 backdrop-blur-xl">
+    <aside className="flex h-screen w-20 flex-shrink-0 flex-col items-center border-r border-white/[0.08] bg-black/50 backdrop-blur-xl">
       
       {/* Logo */}
-      <div className="mt-6 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 font-semibold text-white">
+      <div className="mt-6 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 font-semibold text-white shadow-[0_4px_12px_rgba(37,99,235,0.3)]">
         F
       </div>
 
       {/* Nav */}
-      <nav className="mt-10 flex flex-1 flex-col items-center gap-6">
+      <nav className="mt-10 flex flex-1 flex-col items-center gap-5">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
@@ -56,11 +56,12 @@ export default function Sidebar() {
               <motion.div
                 whileHover={{ y: -2 }}
                 whileTap={{ scale: 0.95 }}
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
                 className={clsx(
-                  "relative flex h-11 w-11 items-center justify-center rounded-xl transition-all duration-200",
+                  "relative flex h-11 w-11 items-center justify-center rounded-xl transition-colors duration-200",
                   isActive
-                    ? "bg-blue-600/20 text-blue-400 shadow-[0_0_25px_rgba(37,99,235,0.35)]"
-                    : "text-white/50 hover:bg-white/5 hover:text-white"
+                    ? "bg-blue-600/20 text-blue-400"
+                    : "text-white/40 hover:bg-white/[0.06] hover:text-white/80"
                 )}
               >
                 <Icon size={20} />
@@ -69,7 +70,8 @@ export default function Sidebar() {
                 {isActive && (
                   <motion.div
                     layoutId="sidebar-active"
-                    className="absolute -left-3 h-6 w-1 rounded-full bg-blue-500"
+                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                    className="absolute -left-[18px] h-6 w-1 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]"
                   />
                 )}
               </motion.div>
@@ -79,7 +81,10 @@ export default function Sidebar() {
       </nav>
 
       {/* Bottom status dot */}
-      <div className="mb-6 h-3 w-3 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.8)]" />
+      <div className="mb-6 flex flex-col items-center gap-2">
+        <div className="h-[1px] w-6 bg-white/[0.08]" />
+        <div className="h-2.5 w-2.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+      </div>
     </aside>
   );
 }

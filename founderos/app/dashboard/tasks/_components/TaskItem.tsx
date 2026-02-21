@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import clsx from "clsx";
 
 type Props = {
@@ -10,10 +11,10 @@ type Props = {
 };
 
 const priorityStyles = {
-  high: "bg-red-500/20 text-red-400",
-  medium: "bg-amber-500/20 text-amber-400",
-  low: "bg-white/10 text-white/60",
-  done: "bg-emerald-500/20 text-emerald-400",
+  high: "bg-red-500/15 text-red-400",
+  medium: "bg-amber-500/15 text-amber-400",
+  low: "bg-white/[0.06] text-white/50",
+  done: "bg-emerald-500/15 text-emerald-400",
 };
 
 export default function TaskItem({
@@ -23,20 +24,36 @@ export default function TaskItem({
   completed,
 }: Props) {
   return (
-    <div
+    <motion.div
+      whileHover={{ y: -1 }}
+      transition={{ type: "spring", stiffness: 300, damping: 25 }}
       className={clsx(
-        "flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] p-4 transition",
-        "hover:bg-white/[0.04]",
-        completed && "opacity-60"
+        "flex items-center justify-between rounded-xl border border-white/[0.08] bg-white/[0.02] p-4 transition-colors",
+        "hover:border-white/[0.14] hover:bg-white/[0.04]",
+        completed && "opacity-50"
       )}
     >
       <div className="flex items-center gap-3">
-        <input type="checkbox" checked={completed} readOnly />
+        {/* Custom checkbox */}
+        <div
+          className={clsx(
+            "flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors",
+            completed
+              ? "border-blue-500 bg-blue-600"
+              : "border-white/20"
+          )}
+        >
+          {completed && (
+            <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+              <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </div>
 
         <div>
           <p
             className={clsx(
-              "text-sm text-white",
+              "text-sm text-white/90",
               completed && "line-through text-white/40"
             )}
           >
@@ -44,19 +61,19 @@ export default function TaskItem({
           </p>
 
           {meta && (
-            <p className="text-xs text-white/40">{meta}</p>
+            <p className="mt-0.5 text-xs text-white/30">{meta}</p>
           )}
         </div>
       </div>
 
       <span
         className={clsx(
-          "rounded-md px-2 py-0.5 text-xs capitalize",
+          "shrink-0 rounded-md px-2 py-0.5 text-xs capitalize",
           priorityStyles[priority]
         )}
       >
         {priority}
       </span>
-    </div>
+    </motion.div>
   );
 }
