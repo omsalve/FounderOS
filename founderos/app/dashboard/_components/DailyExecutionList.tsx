@@ -1,8 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
-import type { Variants } from "framer-motion";
-import { Plus, CalendarOff } from "lucide-react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Plus, CalendarOff, Check } from "lucide-react";
 
 export type DailyTask = {
   id: string;
@@ -11,128 +11,127 @@ export type DailyTask = {
   completed?: boolean;
 };
 
-type DailyExecutionPanelProps = {
-  tasks?: DailyTask[];
-  onToggleTask?: (id: string) => void;
-  onAddTask?: () => void;
-};
+const defaultTasks: DailyTask[] = [
+  { id: "1", title: "Morning standup",       time: "9:00 AM",  completed: true  },
+  { id: "2", title: "Review Q3 financials",  time: "10:00 AM", completed: true  },
+  { id: "3", title: "Sync w/ Engineering",   time: "1:30 PM",  completed: false },
+  { id: "4", title: "Draft investor update", time: "4:00 PM",  completed: false },
+  { id: "5", title: "Review pitch deck v3",  time: "5:30 PM",  completed: false },
+  { id: "6", title: "Weekly review",         time: "EOD",      completed: false },
+];
 
-const listVariants: Variants = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.06 } },
-};
-
-const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 8 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } },
-};
-
-export default function DailyExecutionPanel({
-  tasks = [
-    {
-      id: "1",
-      title: "Review Q3 Financials",
-      time: "10:00 AM",
-      completed: false,
-    },
-    {
-      id: "2",
-      title: "Sync w/ Engineering Lead",
-      time: "1:30 PM",
-      completed: false,
-    },
-    {
-      id: "3",
-      title: "Draft Investor Update",
-      time: "4:00 PM",
-      completed: false,
-    },
-  ],
-  onToggleTask,
+export default function DailyExecutionList({
+  tasks: initialTasks = defaultTasks,
   onAddTask,
-}: DailyExecutionPanelProps) {
+}: {
+  tasks?: DailyTask[];
+  onAddTask?: () => void;
+}) {
+  const [tasks, setTasks] = useState<DailyTask[]>(initialTasks);
+  const toggle = (id: string) => setTasks((p) => p.map((t) => t.id === id ? { ...t, completed: !t.completed } : t));
+
+  const done = tasks.filter((t) => t.completed).length;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
-      className="flex h-full flex-col rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6 backdrop-blur-xl"
+      transition={{ duration: 0.4, ease: "easeOut", delay: 0.05 }}
+      className="flex h-full flex-col rounded-2xl backdrop-blur-xl p-6"
+      style={{ border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)" }}
     >
       {/* Header */}
-      <div className="mb-5 flex items-center justify-between">
-        <p className="text-xs tracking-widest text-white/40">
-          DAILY EXECUTION
-        </p>
-
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <p className="text-[10px] tracking-[0.1em] uppercase font-medium mb-1" style={{ color: "rgba(255,255,255,0.35)" }}>
+            Daily execution
+          </p>
+          <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
+            <span style={{ color: "#60A5FA", fontWeight: 600 }}>{done}</span> / {tasks.length} done
+          </p>
+        </div>
         <motion.button
           onClick={onAddTask}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          transition={{ type: "spring", stiffness: 300, damping: 25 }}
-          className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white shadow-[0_2px_8px_rgba(37,99,235,0.3)] transition-colors hover:bg-blue-500"
+          whileHover={{ y: -2, boxShadow: "0 4px 16px rgba(37,99,235,0.35)" }}
+          whileTap={{ scale: 0.93 }}
+          className="flex h-7 w-7 items-center justify-center rounded-lg text-white"
+          style={{ background: "#2563EB", border: "none", cursor: "pointer", boxShadow: "0 2px 8px rgba(37,99,235,0.3)" }}
         >
-          <Plus size={14} />
+          <Plus size={13} />
         </motion.button>
       </div>
 
-      {/* Task list */}
-      <motion.div
-        variants={listVariants}
-        initial="hidden"
-        animate="show"
-        className="flex-1 space-y-2.5 overflow-y-auto min-h-0"
-      >
-        {tasks.map((task) => (
-          <motion.div
-            key={task.id}
-            variants={itemVariants}
-            whileHover={{ y: -2 }}
-            transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="group flex items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.02] px-4 py-3 transition-colors hover:border-white/[0.14] hover:bg-white/[0.04]"
-          >
-            {/* Checkbox */}
-            <button
-              onClick={() => onToggleTask?.(task.id)}
-              className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors ${
-                task.completed
-                  ? "border-blue-500 bg-blue-600"
-                  : "border-white/20 hover:border-white/40"
-              }`}
-            >
-              {task.completed && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="h-2 w-2 rounded-sm bg-white"
-                />
-              )}
-            </button>
+      {/* Progress bar */}
+      <div className="mb-4 h-[2px] w-full overflow-hidden rounded-full" style={{ background: "rgba(255,255,255,0.06)" }}>
+        <motion.div
+          animate={{ width: tasks.length > 0 ? `${(done / tasks.length) * 100}%` : "0%" }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="h-full rounded-full"
+          style={{ background: "linear-gradient(90deg,#2563EB,#60A5FA)", boxShadow: "0 0 8px rgba(37,99,235,0.5)" }}
+        />
+      </div>
 
-            {/* Task content */}
-            <div className="flex flex-1 items-center justify-between gap-3">
-              <span
-                className={`text-sm ${
-                  task.completed ? "text-white/40 line-through" : "text-white/90"
-                }`}
-              >
-                {task.title}
-              </span>
-
-              {task.time && (
-                <span className="shrink-0 text-xs text-white/30">{task.time}</span>
-              )}
-            </div>
-          </motion.div>
-        ))}
-
-        {/* Empty state */}
-        {tasks.length === 0 && (
-          <div className="flex flex-col items-center justify-center gap-3 py-12">
-            <CalendarOff size={24} className="text-white/20" />
-            <p className="text-sm text-white/30">No tasks scheduled for today.</p>
+      {/* List */}
+      <div className="flex-1 overflow-y-auto min-h-0 space-y-0.5">
+        {tasks.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-3 py-12" style={{ color: "rgba(255,255,255,0.2)" }}>
+            <CalendarOff size={22} strokeWidth={1.5} />
+            <p className="text-sm">No tasks scheduled.</p>
           </div>
+        ) : (
+          <AnimatePresence initial={false}>
+            {tasks.map((task, i) => (
+              <motion.div
+                key={task.id}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.22, delay: i * 0.04 }}
+                onClick={() => toggle(task.id)}
+                whileHover={{ y: -1 }}
+                className="group flex cursor-pointer items-center gap-3 rounded-xl px-4 py-3 transition-colors"
+                style={{
+                  border: "1px solid rgba(255,255,255,0.05)",
+                  background: "rgba(255,255,255,0.02)",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)")}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.05)")}
+              >
+                {/* Checkbox */}
+                <motion.div
+                  animate={{
+                    background: task.completed ? "#2563EB" : "transparent",
+                    borderColor: task.completed ? "#2563EB" : "rgba(255,255,255,0.2)",
+                    boxShadow: task.completed ? "0 0 8px rgba(37,99,235,0.45)" : "none",
+                  }}
+                  transition={{ duration: 0.15 }}
+                  className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded border"
+                >
+                  {task.completed && (
+                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 500, damping: 25 }}>
+                      <Check size={9} color="#fff" strokeWidth={2.5} />
+                    </motion.div>
+                  )}
+                </motion.div>
+
+                {/* Title */}
+                <span
+                  className="flex-1 truncate text-sm transition-colors"
+                  style={{ color: task.completed ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.85)", textDecoration: task.completed ? "line-through" : "none" }}
+                >
+                  {task.title}
+                </span>
+
+                {/* Time */}
+                {task.time && (
+                  <span className="flex-shrink-0 text-xs" style={{ color: "rgba(255,255,255,0.25)" }}>
+                    {task.time}
+                  </span>
+                )}
+              </motion.div>
+            ))}
+          </AnimatePresence>
         )}
-      </motion.div>
+      </div>
     </motion.div>
   );
 }

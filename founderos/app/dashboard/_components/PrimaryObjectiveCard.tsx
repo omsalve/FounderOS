@@ -2,11 +2,20 @@
 
 import { motion } from "framer-motion";
 
+type Priority = "low" | "medium" | "high";
+
 type PrimaryObjectiveCardProps = {
   title?: string;
   description?: string;
-  progress?: number; // 0–100
-  priority?: "low" | "medium" | "high";
+  progress?: number;
+  priority?: Priority;
+  dueDate?: string;
+};
+
+const priorityMap: Record<Priority, { label: string; color: string; border: string; bg: string }> = {
+  low:    { label: "LOW",    color: "rgba(255,255,255,0.5)", border: "rgba(255,255,255,0.15)", bg: "rgba(255,255,255,0.06)" },
+  medium: { label: "MEDIUM", color: "#F59E0B",               border: "rgba(245,158,11,0.3)",   bg: "rgba(245,158,11,0.08)"  },
+  high:   { label: "HIGH",   color: "#60A5FA",               border: "rgba(96,165,250,0.3)",   bg: "rgba(37,99,235,0.12)"   },
 };
 
 export default function PrimaryObjectiveCard({
@@ -14,82 +23,91 @@ export default function PrimaryObjectiveCard({
   description = "Refine the financial projections slide and update the competitive landscape analysis based on yesterday's advisor feedback.",
   progress = 60,
   priority = "high",
+  dueDate = "Due Friday",
 }: PrimaryObjectiveCardProps) {
-  const priorityColor = {
-    low: "text-white/50 border-white/20",
-    medium: "text-yellow-400 border-yellow-400/30",
-    high: "text-blue-400 border-blue-400/30",
-  };
+  const p = priorityMap[priority];
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6 backdrop-blur-xl transition-colors duration-200 hover:border-white/[0.12]"
+      className="relative overflow-hidden rounded-2xl backdrop-blur-xl"
+      style={{
+        border: "1px solid rgba(255,255,255,0.08)",
+        background: "rgba(255,255,255,0.03)",
+      }}
     >
-      {/* Inner top gradient */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-blue-600/[0.04] to-transparent" />
+      {/* Top gradient wash */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-28"
+           style={{ background: "linear-gradient(to bottom, rgba(37,99,235,0.06), transparent)" }} />
 
-      {/* Header */}
-      <div className="relative z-10 flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs tracking-widest text-white/40">
-            PRIMARY OBJECTIVE
+      {/* Left accent bar */}
+      <div className="absolute left-0 top-0 h-full w-[3px] rounded-l-2xl"
+           style={{ background: "linear-gradient(to bottom, #3B82F6, rgba(37,99,235,0.2))" }} />
+
+      <div className="relative z-10 p-6 pl-8">
+        {/* Header */}
+        <div className="mb-3 flex items-start justify-between gap-4">
+          <p className="text-[10px] tracking-[0.1em] uppercase font-medium"
+             style={{ color: "rgba(255,255,255,0.35)" }}>
+            Primary objective
           </p>
-
-          <h2 className="mt-3 text-2xl font-semibold tracking-tight">
-            {title}
-          </h2>
-
-          <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/50">
-            {description}
-          </p>
+          <span className="rounded px-2 py-0.5 text-[10px] font-semibold tracking-wide"
+                style={{ background: p.bg, color: p.color, border: `1px solid ${p.border}` }}>
+            {p.label}
+          </span>
         </div>
 
-        {/* Priority badge */}
-        <div
-          className={`shrink-0 rounded-md border px-3 py-1 text-xs tracking-wide ${
-            priorityColor[priority]
-          }`}
-        >
-          {priority.toUpperCase()}
+        {/* Title */}
+        <h2 className="mb-2 leading-tight"
+            style={{ fontFamily: "var(--font-head)", fontSize: 24, color: "#fff", letterSpacing: "0.02em" }}>
+          {title.toUpperCase()}
+        </h2>
+
+        {/* Description */}
+        <p className="mb-5 max-w-lg text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.45)" }}>
+          {description}
+        </p>
+
+        {/* Progress */}
+        <div className="mb-5">
+          <div className="mb-1.5 flex justify-between text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>
+            <span className="tracking-widest uppercase">Completion</span>
+            <span style={{ color: "rgba(255,255,255,0.65)", fontWeight: 500 }}>{progress}%</span>
+          </div>
+          <div className="h-[3px] w-full rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.9, ease: "easeOut", delay: 0.2 }}
+              className="h-full rounded-full"
+              style={{ background: "linear-gradient(90deg,#2563EB,#60A5FA)", boxShadow: "0 0 10px rgba(37,99,235,0.5)" }}
+            />
+          </div>
+          <p className="mt-1 text-right text-[11px]" style={{ color: "rgba(255,255,255,0.3)" }}>{dueDate}</p>
         </div>
-      </div>
 
-      {/* Progress section */}
-      <div className="relative z-10 mt-6">
-        <div className="mb-2 flex items-center justify-between text-xs text-white/40">
-          <span className="tracking-widest">COMPLETION</span>
-          <span className="text-white/70">{progress}%</span>
+        {/* Actions */}
+        <div className="flex gap-2">
+          <motion.button
+            whileHover={{ y: -3, boxShadow: "0 8px 28px rgba(37,99,235,0.45)" }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ type: "spring", stiffness: 200, damping: 18 }}
+            className="flex-1 rounded-xl py-3 text-sm font-medium text-white uppercase tracking-wide"
+            style={{ background: "#2563EB", boxShadow: "0 4px 16px rgba(37,99,235,0.3)", border: "none", cursor: "pointer" }}
+          >
+            Enter deep focus
+          </motion.button>
+          <motion.button
+            whileHover={{ background: "rgba(255,255,255,0.06)" }}
+            whileTap={{ scale: 0.96 }}
+            className="rounded-xl px-4 py-3 text-sm"
+            style={{ border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "rgba(255,255,255,0.4)", cursor: "pointer" }}
+          >
+            •••
+          </motion.button>
         </div>
-
-        {/* Progress bar */}
-        <div className="h-1.5 w-full rounded-full bg-white/[0.08]">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="h-full rounded-full bg-blue-600 shadow-[0_0_12px_rgba(37,99,235,0.4)]"
-          />
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div className="relative z-10 mt-6 flex items-center gap-3">
-        <motion.button
-          whileHover={{ y: -2 }}
-          whileTap={{ scale: 0.98 }}
-          transition={{ type: "spring", stiffness: 300, damping: 25 }}
-          className="flex-1 rounded-xl bg-blue-600 py-3 text-sm font-medium text-white shadow-[0_4px_16px_rgba(37,99,235,0.3)] transition-shadow hover:shadow-[0_6px_24px_rgba(37,99,235,0.4)]"
-        >
-          ENTER DEEP FOCUS
-        </motion.button>
-
-        {/* overflow (future menu) */}
-        <button className="rounded-xl border border-white/[0.08] px-4 py-3 text-white/40 transition-colors hover:border-white/15 hover:text-white/70">
-          •••
-        </button>
       </div>
     </motion.div>
   );

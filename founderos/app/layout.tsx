@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 const bebas = Bebas_Neue({
   subsets: ["latin"],
   weight: "400",
+  // Expose as both names so old .font-heading classes and new --font-head var both work
   variable: "--font-heading",
 });
 
@@ -33,6 +34,15 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${bebas.variable}`}
     >
+      <head>
+        {/*
+          Wire --font-head to the same value as --font-heading so both
+          the old components and new Quiet OS components resolve Bebas Neue.
+        */}
+        <style>{`
+          :root { --font-head: var(--font-heading), 'Bebas Neue', system-ui, sans-serif; }
+        `}</style>
+      </head>
       <body className="antialiased">
         {children}
       </body>

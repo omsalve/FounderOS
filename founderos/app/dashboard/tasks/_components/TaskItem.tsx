@@ -1,46 +1,48 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { Trash2 } from "lucide-react";
 import clsx from "clsx";
 
-type Props = {
+interface Props {
+  id: string;
   title: string;
-  meta?: string;
-  priority?: "high" | "medium" | "low" | "done";
-  completed?: boolean;
-};
-
-const priorityStyles = {
-  high: "bg-red-500/15 text-red-400",
-  medium: "bg-amber-500/15 text-amber-400",
-  low: "bg-white/[0.06] text-white/50",
-  done: "bg-emerald-500/15 text-emerald-400",
-};
+  completed: boolean;
+  onToggle: (id: string, completed: boolean) => void;
+  onDelete: (id: string) => void;
+}
 
 export default function TaskItem({
+  id,
   title,
-  meta,
-  priority = "low",
   completed,
+  onToggle,
+  onDelete,
 }: Props) {
   return (
     <motion.div
-      whileHover={{ y: -1 }}
+      layout
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, x: -12 }}
       transition={{ type: "spring", stiffness: 300, damping: 25 }}
+      whileHover={{ y: -1 }}
       className={clsx(
-        "flex items-center justify-between rounded-xl border border-white/[0.08] bg-white/[0.02] p-4 transition-colors",
+        "group flex items-center justify-between rounded-xl border border-white/[0.08] bg-white/[0.02] p-4 transition-colors",
         "hover:border-white/[0.14] hover:bg-white/[0.04]",
         completed && "opacity-50"
       )}
     >
       <div className="flex items-center gap-3">
         {/* Custom checkbox */}
-        <div
+        <button
+          type="button"
+          onClick={() => onToggle(id, completed)}
           className={clsx(
-            "flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors",
+            "flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center rounded border transition-colors",
             completed
               ? "border-blue-500 bg-blue-600"
-              : "border-white/20"
+              : "border-white/20 hover:border-white/40"
           )}
         >
           {completed && (
@@ -48,32 +50,25 @@ export default function TaskItem({
               <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           )}
-        </div>
+        </button>
 
-        <div>
-          <p
-            className={clsx(
-              "text-sm text-white/90",
-              completed && "line-through text-white/40"
-            )}
-          >
-            {title}
-          </p>
-
-          {meta && (
-            <p className="mt-0.5 text-xs text-white/30">{meta}</p>
+        <p
+          className={clsx(
+            "text-sm text-white/90",
+            completed && "line-through text-white/40"
           )}
-        </div>
+        >
+          {title}
+        </p>
       </div>
 
-      <span
-        className={clsx(
-          "shrink-0 rounded-md px-2 py-0.5 text-xs capitalize",
-          priorityStyles[priority]
-        )}
+      <button
+        type="button"
+        onClick={() => onDelete(id)}
+        className="shrink-0 rounded-md p-1.5 text-white/0 transition-colors group-hover:text-white/30 hover:!text-red-400"
       >
-        {priority}
-      </span>
+        <Trash2 size={14} />
+      </button>
     </motion.div>
   );
 }

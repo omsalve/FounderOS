@@ -1,7 +1,9 @@
 "use client";
 
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import type { Variants } from "framer-motion";
+import type { Task } from "./TasksPageShell";
 
 const container: Variants = {
   hidden: {},
@@ -13,7 +15,18 @@ const item: Variants = {
   show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } },
 };
 
-export default function TasksRightPanel() {
+interface Props {
+  tasks: Task[];
+}
+
+export default function TasksRightPanel({ tasks }: Props) {
+  const { total, completed, rate } = useMemo(() => {
+    const total = tasks.length;
+    const completed = tasks.filter((t) => t.completed).length;
+    const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+    return { total, completed, rate };
+  }, [tasks]);
+
   return (
     <motion.div
       variants={container}
@@ -43,17 +56,17 @@ export default function TasksRightPanel() {
       {/* Stats */}
       <motion.div variants={item} className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
         <p className="text-xs tracking-widest text-white/40">TASKS COMPLETED</p>
-        <p className="mt-1.5 text-2xl font-semibold text-white">12</p>
+        <p className="mt-1.5 text-2xl font-semibold text-white">{completed}</p>
       </motion.div>
 
       <motion.div variants={item} className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
         <p className="text-xs tracking-widest text-white/40">COMPLETION RATE</p>
-        <p className="mt-1.5 text-2xl font-semibold text-white">88%</p>
+        <p className="mt-1.5 text-2xl font-semibold text-white">{rate}%</p>
       </motion.div>
 
       <motion.div variants={item} className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.08] p-4">
-        <p className="text-xs tracking-widest text-blue-300/70">CURRENT STREAK</p>
-        <p className="mt-1.5 text-2xl font-semibold text-white">14 Days</p>
+        <p className="text-xs tracking-widest text-blue-300/70">TOTAL TASKS</p>
+        <p className="mt-1.5 text-2xl font-semibold text-white">{total}</p>
       </motion.div>
     </motion.div>
   );
