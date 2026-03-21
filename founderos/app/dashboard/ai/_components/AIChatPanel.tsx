@@ -149,13 +149,6 @@ export default function AIChat({ onPlanGenerated, onLoading }: AIChatProps) {
               Reset
             </motion.button>
           )}
-          <div
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs"
-            style={{ background: "rgba(37,99,235,0.12)", border: "1px solid rgba(37,99,235,0.25)", color: "#60A5FA" }}
-          >
-            <Sparkles size={11} />
-            claude-sonnet-4
-          </div>
         </div>
       </div>
 

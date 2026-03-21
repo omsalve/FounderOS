@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/lib/auth/auth.config";
-import Anthropic from "@anthropic-ai/sdk";
 
-const client = new Anthropic();
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY!;
+const MODEL = "openai/gpt-oss-120b:free";
 
 const SYSTEM_PROMPT = `You are an execution planning AI for FounderOS — a productivity OS for founders and builders.
 
@@ -48,20 +48,50 @@ export async function POST(req: Request) {
   try {
     const { message, history } = await req.json();
 
+    // Build messages array: system prompt + prior history + new user message
     const messages = [
-      ...(history || []),
-      { role: "user" as const, content: message },
+      { role: "system", content: SYSTEM_PROMPT },
+      ...(history ?? []).map((m: { role: string; content: string }) => ({
+        role: m.role === "assistant" ? "assistant" : "user",
+        content: m.content,
+      })),
+      { role: "user", content: message },
     ];
 
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 2000,
-      system: SYSTEM_PROMPT,
-      messages,
-    });
+    const response = await fetch(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "https://founderos.app", // optional but good practice
+          "X-Title": "FounderOS",
+        },
+        body: JSON.stringify({
+          model: MODEL,
+          messages,
+        }),
+      }
+    );
 
-    const text =
-      response.content[0].type === "text" ? response.content[0].text : "";
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      console.error("[OpenRouter error]", response.status, err);
+      return NextResponse.json(
+        { error: "AI request failed" },
+        { status: 500 }
+      );
+    }
+
+    const result = await response.json();
+    const raw = result.choices?.[0]?.message?.content ?? "";
+
+    // Strip accidental markdown fences
+    const text = raw
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/\s*```$/i, "")
+      .trim();
 
     let plan = null;
     try {

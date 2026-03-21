@@ -17,6 +17,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   tasks         Task[]
+  plans         Plan[]
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -70,4 +71,58 @@ model Task {
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+}
+
+// ─── Execution plan hierarchy ────────────────────────────────────────────────
+
+model Plan {
+  id                   String  @id @default(cuid())
+  goal                 String
+  yearlyGoalTitle      String
+  yearlyGoalDescription String  @db.Text
+
+  userId  String
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  months  PlanMonth[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model PlanMonth {
+  id        String @id @default(cuid())
+  month     Int
+  title     String
+  milestone String @db.Text
+
+  planId String
+  plan   Plan   @relation(fields: [planId], references: [id], onDelete: Cascade)
+  weeks  PlanWeek[]
+
+  @@index([planId])
+}
+
+model PlanWeek {
+  id         String @id @default(cuid())
+  week       Int
+  commitment String @db.Text
+
+  monthId String
+  month   PlanMonth  @relation(fields: [monthId], references: [id], onDelete: Cascade)
+  tasks   PlanTask[]
+
+  @@index([monthId])
+}
+
+model PlanTask {
+  id        String  @id @default(cuid())
+  title     String
+  completed Boolean @default(false)
+
+  weekId String
+  week   PlanWeek @relation(fields: [weekId], references: [id], onDelete: Cascade)
+
+  @@index([weekId])
 }

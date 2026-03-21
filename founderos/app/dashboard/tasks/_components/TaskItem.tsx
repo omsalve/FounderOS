@@ -1,8 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Trash2 } from "lucide-react";
-import clsx from "clsx";
+import { Trash2, Check } from "lucide-react";
 
 interface Props {
   id: string;
@@ -27,48 +26,87 @@ export default function TaskItem({
       exit={{ opacity: 0, x: -12 }}
       transition={{ type: "spring", stiffness: 300, damping: 25 }}
       whileHover={{ y: -1 }}
-      className={clsx(
-        "group flex items-center justify-between rounded-xl border border-white/[0.08] bg-white/[0.02] p-4 transition-colors",
-        "hover:border-white/[0.14] hover:bg-white/[0.04]",
-        completed && "opacity-50"
-      )}
+      onClick={() => onToggle(id, completed)}
+      className="group flex cursor-pointer items-center gap-3 rounded-xl px-4 py-3 transition-colors"
+      style={{
+        border: "1px solid rgba(255,255,255,0.05)",
+        background: "rgba(255,255,255,0.02)",
+      }}
+      onMouseEnter={(e) =>
+        (e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)")
+      }
+      onMouseLeave={(e) =>
+        (e.currentTarget.style.borderColor = "rgba(255,255,255,0.05)")
+      }
     >
-      <div className="flex items-center gap-3">
-        {/* Custom checkbox */}
-        <button
-          type="button"
-          onClick={() => onToggle(id, completed)}
-          className={clsx(
-            "flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center rounded border transition-colors",
-            completed
-              ? "border-blue-500 bg-blue-600"
-              : "border-white/20 hover:border-white/40"
-          )}
-        >
-          {completed && (
-            <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-              <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          )}
-        </button>
-
-        <p
-          className={clsx(
-            "text-sm text-white/90",
-            completed && "line-through text-white/40"
-          )}
-        >
-          {title}
-        </p>
-      </div>
-
-      <button
-        type="button"
-        onClick={() => onDelete(id)}
-        className="shrink-0 rounded-md p-1.5 text-white/0 transition-colors group-hover:text-white/30 hover:!text-red-400"
+      {/* Checkbox */}
+      <motion.div
+        animate={{
+          background: completed ? "#2563EB" : "transparent",
+          borderColor: completed
+            ? "#2563EB"
+            : "rgba(255,255,255,0.2)",
+          boxShadow: completed
+            ? "0 0 8px rgba(37,99,235,0.45)"
+            : "none",
+        }}
+        transition={{ duration: 0.15 }}
+        className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded border"
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggle(id, completed);
+        }}
       >
-        <Trash2 size={14} />
-      </button>
+        {completed && (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 500, damping: 25 }}
+          >
+            <Check size={9} color="#fff" strokeWidth={2.5} />
+          </motion.div>
+        )}
+      </motion.div>
+
+      {/* Title */}
+      <span
+        className="flex-1 truncate text-sm transition-colors"
+        style={{
+          color: completed
+            ? "rgba(255,255,255,0.3)"
+            : "rgba(255,255,255,0.85)",
+          textDecoration: completed ? "line-through" : "none",
+        }}
+      >
+        {title}
+      </span>
+
+      {/* Delete */}
+      <motion.button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete(id);
+        }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        className="flex-shrink-0 rounded-lg p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+        style={{
+          background: "transparent",
+          border: "none",
+          cursor: "pointer",
+          color: "rgba(255,255,255,0.25)",
+        }}
+        onMouseEnter={(e) =>
+          ((e.currentTarget as HTMLButtonElement).style.color = "#EF4444")
+        }
+        onMouseLeave={(e) =>
+          ((e.currentTarget as HTMLButtonElement).style.color =
+            "rgba(255,255,255,0.25)")
+        }
+      >
+        <Trash2 size={13} />
+      </motion.button>
     </motion.div>
   );
 }

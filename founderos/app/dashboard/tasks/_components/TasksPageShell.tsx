@@ -14,25 +14,21 @@ export interface Task {
   updatedAt: string;
 }
 
+type Filter = "all" | "active" | "completed";
+
 export default function TasksPageShell() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<Filter>("all");
 
   useEffect(() => {
     fetch("/api/tasks")
       .then(async (res) => {
-        if (!res.ok) {
-          const body = await res.json().catch(() => null);
-          console.error("[GET /api/tasks]", res.status, JSON.stringify(body, null, 2));
-          return [];
-        }
+        if (!res.ok) return [];
         return res.json();
       })
       .then((data: Task[]) => setTasks(data))
-      .catch((err) => {
-        console.error("[GET /api/tasks] network error", err);
-        setTasks([]);
-      })
+      .catch(() => setTasks([]))
       .finally(() => setLoading(false));
   }, []);
 
@@ -45,24 +41,17 @@ export default function TasksPageShell() {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-
     setTasks((prev) => [optimistic, ...prev]);
-
     try {
       const res = await fetch("/api/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title }),
       });
-      if (!res.ok) {
-        const body = await res.json().catch(() => null);
-        console.error("[POST /api/tasks]", res.status, body);
-        throw new Error(body?.error ?? "Failed to create task");
-      }
+      if (!res.ok) throw new Error();
       const created: Task = await res.json();
       setTasks((prev) => prev.map((t) => (t.id === tempId ? created : t)));
-    } catch (err) {
-      console.error("[addTask]", err);
+    } catch {
       setTasks((prev) => prev.filter((t) => t.id !== tempId));
     }
   }, []);
@@ -71,7 +60,6 @@ export default function TasksPageShell() {
     setTasks((prev) =>
       prev.map((t) => (t.id === id ? { ...t, completed: !completed } : t))
     );
-
     try {
       const res = await fetch(`/api/tasks/${id}`, {
         method: "PATCH",
@@ -94,36 +82,43 @@ export default function TasksPageShell() {
       removed = prev.find((t) => t.id === id);
       return prev.filter((t) => t.id !== id);
     });
-
     try {
       const res = await fetch(`/api/tasks/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
     } catch {
-      if (removed) {
-        setTasks((prev) => [...prev, removed!]);
-      }
+      if (removed) setTasks((prev) => [...prev, removed!]);
     }
   }, []);
 
+  const filteredTasks = tasks.filter((t) => {
+    if (filter === "active") return !t.completed;
+    if (filter === "completed") return t.completed;
+    return true;
+  });
+
   return (
-    <div className="h-full w-full">
+    <div className="flex h-full flex-col overflow-hidden">
       <TasksHeader />
 
-      <div className="mt-6 grid grid-cols-10 gap-6">
-        {/* LEFT */}
-        <div className="col-span-7 space-y-4">
+      <div className="grid flex-1 min-h-0 grid-cols-10 gap-5 overflow-hidden">
+        {/* LEFT — task list */}
+        <div className="col-span-7 flex flex-col gap-4 overflow-y-auto min-h-0 pr-1">
           <TaskInput onAdd={addTask} />
           <TaskList
-            tasks={tasks}
+            tasks={filteredTasks}
             loading={loading}
             onToggle={toggleTask}
             onDelete={deleteTask}
           />
         </div>
 
-        {/* RIGHT */}
-        <div className="col-span-3">
-          <TasksRightPanel tasks={tasks} />
+        {/* RIGHT — stats + filters */}
+        <div className="col-span-3 overflow-y-auto min-h-0">
+          <TasksRightPanel
+            tasks={tasks}
+            filter={filter}
+            onFilterChange={setFilter}
+          />
         </div>
       </div>
     </div>
