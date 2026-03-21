@@ -7,15 +7,13 @@ import DailyExecutionList from "./_components/DailyExecutionList";
 import WeeklyMomentumChart from "./_components/WeeklyMomentumChart";
 import StatCard from "./_components/StatCard";
 
-// ─── Date helpers ─────────────────────────────────────────────────────────────
-
 function startOfDay(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
 function startOfWeek(d: Date) {
   const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day; // Monday-based
+  const diff = day === 0 ? -6 : 1 - day;
   const mon = new Date(d);
   mon.setDate(d.getDate() + diff);
   return startOfDay(mon);
@@ -30,8 +28,6 @@ function dayOfQuarter(d: Date) {
   return Math.floor((d.getTime() - quarterStart.getTime()) / 86_400_000) + 1;
 }
 
-// Which plan week number are we in, based on when the plan was created?
-// Week 1 = days 0–6, Week 2 = days 7–13, etc. Capped at the max week in the plan.
 function currentPlanWeek(planCreatedAt: Date, now: Date, maxWeek: number) {
   const daysSinceStart = Math.floor(
     (now.getTime() - planCreatedAt.getTime()) / 86_400_000
@@ -40,7 +36,6 @@ function currentPlanWeek(planCreatedAt: Date, now: Date, maxWeek: number) {
   return Math.min(weekNumber, maxWeek);
 }
 
-// Streak: consecutive days (back from today) with ≥1 completed task
 function computeStreak(completedDates: Date[]): number {
   if (completedDates.length === 0) return 0;
   const days = new Set(
@@ -48,7 +43,6 @@ function computeStreak(completedDates: Date[]): number {
   );
   let streak = 0;
   const cursor = new Date();
-  // include today in streak if they've already completed something
   while (true) {
     const key = cursor.toISOString().slice(0, 10);
     if (!days.has(key)) break;
@@ -66,28 +60,20 @@ export default async function DashboardPage() {
   const now = new Date();
   const weekStart = startOfWeek(now);
 
-  // ── Parallel DB queries ────────────────────────────────────────────────────
   const [allTasks, weekTasks, completedThisWeekByDay, latestPlan] =
     await Promise.all([
-      // All tasks for streak
       prisma.task.findMany({
         where: { userId },
         select: { completed: true, updatedAt: true },
       }),
-
-      // This week's tasks for stats
       prisma.task.findMany({
         where: { userId, createdAt: { gte: weekStart } },
         select: { completed: true },
       }),
-
-      // Completed tasks this week for chart
       prisma.task.findMany({
         where: { userId, completed: true, updatedAt: { gte: weekStart } },
         select: { updatedAt: true },
       }),
-
-      // Latest plan with full tree
       prisma.plan.findFirst({
         where: { userId },
         orderBy: { createdAt: "desc" },
@@ -105,22 +91,22 @@ export default async function DashboardPage() {
       }),
     ]);
 
-  // ── Streak ────────────────────────────────────────────────────────────────
+  // Explicit type so strict mode is satisfied
   const completedDates = allTasks
-    .filter((t) => t.completed)
-    .map((t) => t.updatedAt);
+    .filter((t: { completed: boolean; updatedAt: Date }) => t.completed)
+    .map((t: { completed: boolean; updatedAt: Date }) => t.updatedAt);
   const streak = computeStreak(completedDates);
 
-  // ── Focus score ───────────────────────────────────────────────────────────
   const weekTotal = weekTasks.length;
-  const weekDone = weekTasks.filter((t) => t.completed).length;
+  const weekDone = weekTasks.filter(
+    (t: { completed: boolean }) => t.completed
+  ).length;
   const focusPercent =
     weekTotal > 0 ? Math.round((weekDone / weekTotal) * 100) : 0;
 
-  // ── Weekly chart ──────────────────────────────────────────────────────────
   const DAYS = ["M", "T", "W", "T", "F", "S", "S"];
   const dayCounts = Array(7).fill(0);
-  completedThisWeekByDay.forEach(({ updatedAt }) => {
+  completedThisWeekByDay.forEach(({ updatedAt }: { updatedAt: Date }) => {
     const jsDay = updatedAt.getDay();
     const monIndex = jsDay === 0 ? 6 : jsDay - 1;
     dayCounts[monIndex]++;
@@ -132,18 +118,18 @@ export default async function DashboardPage() {
     isToday: i === todayMonIndex,
   }));
 
-  // ── Plan-derived data ─────────────────────────────────────────────────────
   let primaryObjective = null;
-  let dailyTasks: { id: string; title: string; completed: boolean; weekLabel?: string }[] = [];
+  let dailyTasks: {
+    id: string;
+    title: string;
+    completed: boolean;
+    weekLabel?: string;
+  }[] = [];
 
   if (latestPlan) {
-    // All weeks across all months, flattened and sorted
     const allWeeks = latestPlan.months.flatMap((m) => m.weeks);
     const maxWeek = Math.max(...allWeeks.map((w) => w.week), 1);
-
     const currentWeek = currentPlanWeek(latestPlan.createdAt, now, maxWeek);
-
-    // Find the matching week
     const activeWeek = allWeeks.find((w) => w.week === currentWeek);
 
     if (activeWeek) {
@@ -155,7 +141,6 @@ export default async function DashboardPage() {
       }));
     }
 
-    // Progress across all plan tasks
     const allPlanTasks = allWeeks.flatMap((w) => w.tasks);
     const donePlanTasks = allPlanTasks.filter((t) => t.completed).length;
     const progress =
@@ -172,7 +157,6 @@ export default async function DashboardPage() {
     };
   }
 
-  // ── Stat counts using plan tasks ──────────────────────────────────────────
   const todayTotal = dailyTasks.length;
   const todayDone = dailyTasks.filter((t) => t.completed).length;
 
@@ -234,10 +218,7 @@ export default async function DashboardPage() {
         </div>
 
         <div className="col-span-4 min-h-0 overflow-hidden">
-          <DailyExecutionList
-            tasks={dailyTasks}
-            hasPlan={!!latestPlan}
-          />
+          <DailyExecutionList tasks={dailyTasks} hasPlan={!!latestPlan} />
         </div>
       </div>
     </div>
