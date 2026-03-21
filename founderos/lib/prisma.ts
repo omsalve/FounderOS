@@ -1,13 +1,13 @@
-import "server-only"
+import "server-only";
 
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@/lib/generated/prisma";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
   pool?: Pool;
-  adapter?: any;
+  adapter?: PrismaPg;
 };
 
 if (!process.env.DATABASE_URL) {
