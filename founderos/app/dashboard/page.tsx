@@ -32,15 +32,12 @@ function currentPlanWeek(planCreatedAt: Date, now: Date, maxWeek: number) {
   const daysSinceStart = Math.floor(
     (now.getTime() - planCreatedAt.getTime()) / 86_400_000
   );
-  const weekNumber = Math.floor(daysSinceStart / 7) + 1;
-  return Math.min(weekNumber, maxWeek);
+  return Math.min(Math.floor(daysSinceStart / 7) + 1, maxWeek);
 }
 
 function computeStreak(completedDates: Date[]): number {
   if (completedDates.length === 0) return 0;
-  const days = new Set(
-    completedDates.map((d) => d.toISOString().slice(0, 10))
-  );
+  const days = new Set(completedDates.map((d) => d.toISOString().slice(0, 10)));
   let streak = 0;
   const cursor = new Date();
   while (true) {
@@ -54,9 +51,8 @@ function computeStreak(completedDates: Date[]): number {
 
 export default async function DashboardPage() {
   const session = await getServerSession(authConfig);
-  const userId = (session?.user as any)?.id as string | undefined;
+  const userId = (session?.user as { id?: string })?.id;
   const name = session?.user?.name ?? "Founder";
-
   const now = new Date();
   const weekStart = startOfWeek(now);
 
@@ -91,34 +87,44 @@ export default async function DashboardPage() {
       }),
     ]);
 
-  // Explicit type so strict mode is satisfied
-  const completedDates = allTasks
-    .filter((t: { completed: boolean; updatedAt: Date }) => t.completed)
-    .map((t: { completed: boolean; updatedAt: Date }) => t.updatedAt);
+  const completedDates = (allTasks as { completed: boolean; updatedAt: Date }[])
+    .filter((t) => t.completed)
+    .map((t) => t.updatedAt);
   const streak = computeStreak(completedDates);
 
-  const weekTotal = weekTasks.length;
-  const weekDone = weekTasks.filter(
-    (t: { completed: boolean }) => t.completed
+  const weekDone = (weekTasks as { completed: boolean }[]).filter(
+    (t) => t.completed
   ).length;
   const focusPercent =
-    weekTotal > 0 ? Math.round((weekDone / weekTotal) * 100) : 0;
+    weekTasks.length > 0
+      ? Math.round((weekDone / weekTasks.length) * 100)
+      : 0;
 
   const DAYS = ["M", "T", "W", "T", "F", "S", "S"];
   const dayCounts = Array(7).fill(0);
-  completedThisWeekByDay.forEach(({ updatedAt }: { updatedAt: Date }) => {
+  (completedThisWeekByDay as { updatedAt: Date }[]).forEach(({ updatedAt }) => {
     const jsDay = updatedAt.getDay();
-    const monIndex = jsDay === 0 ? 6 : jsDay - 1;
-    dayCounts[monIndex]++;
+    dayCounts[jsDay === 0 ? 6 : jsDay - 1]++;
   });
   const todayMonIndex = now.getDay() === 0 ? 6 : now.getDay() - 1;
   const chartData = DAYS.map((day, i) => ({
     day,
-    value: dayCounts[i],
+    value: dayCounts[i] as number,
     isToday: i === todayMonIndex,
   }));
 
-  let primaryObjective = null;
+  type PlanType = NonNullable<typeof latestPlan>;
+  type MonthType = PlanType["months"][0];
+  type WeekType = MonthType["weeks"][0];
+  type TaskType = WeekType["tasks"][0];
+
+  let primaryObjective: {
+    title: string;
+    description: string;
+    progress: number;
+    dueDate: string;
+  } | null = null;
+
   let dailyTasks: {
     id: string;
     title: string;
@@ -127,13 +133,15 @@ export default async function DashboardPage() {
   }[] = [];
 
   if (latestPlan) {
-    const allWeeks = latestPlan.months.flatMap((m) => m.weeks);
-    const maxWeek = Math.max(...allWeeks.map((w) => w.week), 1);
+    const allWeeks: WeekType[] = latestPlan.months.flatMap(
+      (m: MonthType) => m.weeks
+    );
+    const maxWeek = Math.max(...allWeeks.map((w: WeekType) => w.week), 1);
     const currentWeek = currentPlanWeek(latestPlan.createdAt, now, maxWeek);
-    const activeWeek = allWeeks.find((w) => w.week === currentWeek);
+    const activeWeek = allWeeks.find((w: WeekType) => w.week === currentWeek);
 
     if (activeWeek) {
-      dailyTasks = activeWeek.tasks.map((t) => ({
+      dailyTasks = activeWeek.tasks.map((t: TaskType) => ({
         id: t.id,
         title: t.title,
         completed: t.completed,
@@ -141,14 +149,18 @@ export default async function DashboardPage() {
       }));
     }
 
-    const allPlanTasks = allWeeks.flatMap((w) => w.tasks);
-    const donePlanTasks = allPlanTasks.filter((t) => t.completed).length;
+    const allPlanTasks: TaskType[] = allWeeks.flatMap(
+      (w: WeekType) => w.tasks
+    );
+    const donePlanTasks = allPlanTasks.filter(
+      (t: TaskType) => t.completed
+    ).length;
     const progress =
       allPlanTasks.length > 0
         ? Math.round((donePlanTasks / allPlanTasks.length) * 100)
         : 0;
 
-    const firstMonth = latestPlan.months[0];
+    const firstMonth = latestPlan.months[0] as MonthType | undefined;
     primaryObjective = {
       title: latestPlan.goal,
       description: latestPlan.yearlyGoalDescription,
@@ -157,7 +169,6 @@ export default async function DashboardPage() {
     };
   }
 
-  const todayTotal = dailyTasks.length;
   const todayDone = dailyTasks.filter((t) => t.completed).length;
 
   return (
@@ -174,7 +185,7 @@ export default async function DashboardPage() {
       <div className="mb-5 grid flex-shrink-0 grid-cols-3 gap-3">
         <StatCard
           label="Tasks this week"
-          value={todayTotal}
+          value={dailyTasks.length}
           sub={`${todayDone} completed`}
           delay={0}
         />
