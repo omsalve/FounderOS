@@ -126,6 +126,7 @@ export default function HomePage() {
           transition={{ delay: 0.35, duration: 0.7 }}
           className="mt-10 flex flex-col items-center gap-3"
         >
+          <Link href="/register" className="text-sm text-white/50 hover:text-white transition">
           <motion.button
             initial={{ boxShadow: "0 0 0 rgba(37, 99, 235, 0)", y: 0, scale: 1 }}
             whileHover={{
@@ -147,6 +148,7 @@ export default function HomePage() {
           >
             Start Executing
           </motion.button>
+          </Link>
 
           
         </motion.div>
